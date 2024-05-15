@@ -1,5 +1,8 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Play } from "phosphor-react";
 import { useForm } from "react-hook-form";
+import * as zod from "zod";
+
 import {
   CountdownContainer,
   FormContainer,
@@ -10,14 +13,28 @@ import {
   TaskInput,
 } from "./Home.styles";
 
+const newCycleFormSchema = zod.object({
+  task: zod
+    .string()
+    .min(1, "O nome do projeto deve ter pelo menos 1 caractere."),
+  minutesAmount: zod
+    .number()
+    .min(5, "O tempo mínimo é de 5 minutos.")
+    .max(60, "O tempo máximo é de 60 minutos."),
+});
+
 export function Home() {
-  const { register, handleSubmit, watch } = useForm();
+  const { register, handleSubmit, watch, formState } = useForm({
+    resolver: zodResolver(newCycleFormSchema),
+  });
 
   function handleCreateNewCycle(data: any) {
     console.log(data);
   }
 
-  // Retorna o valor do input em tempo real
+  console.log(formState.errors);
+
+  // Retorna o valor do input em tempo real, transformando o form em controlled
   const task = watch("task");
   const isSubmitDisabled = !task;
 
