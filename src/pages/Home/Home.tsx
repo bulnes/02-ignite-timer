@@ -23,15 +23,19 @@ const newCycleFormSchema = zod.object({
     .max(60, "O tempo máximo é de 60 minutos."),
 });
 
-export function Home() {
-  const { register, handleSubmit, watch, formState } = useForm({
-    resolver: zodResolver(newCycleFormSchema),
-  });
+type NewCycleFormData = zod.infer<typeof newCycleFormSchema>;
 
-  function handleCreateNewCycle(data: any) {
+export function Home() {
+  const { register, handleSubmit, watch, formState } =
+    useForm<NewCycleFormData>({
+      resolver: zodResolver(newCycleFormSchema),
+    });
+
+  function handleCreateNewCycle(data: NewCycleFormData) {
     console.log(data);
   }
 
+  // Retorna os erros de validação do formulário
   console.log(formState.errors);
 
   // Retorna o valor do input em tempo real, transformando o form em controlled
