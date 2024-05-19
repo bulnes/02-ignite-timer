@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Play } from "phosphor-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as zod from "zod";
-
 import {
   CountdownContainer,
   FormContainer,
@@ -25,7 +25,14 @@ const newCycleFormSchema = zod.object({
 
 type NewCycleFormData = zod.infer<typeof newCycleFormSchema>;
 
+interface Cycle extends NewCycleFormData {
+  id: string;
+}
+
 export function Home() {
+  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [currentCycleId, setCurrentCycleId] = useState<string | null>(null);
+
   const { register, handleSubmit, watch, formState, reset } =
     useForm<NewCycleFormData>({
       resolver: zodResolver(newCycleFormSchema),
@@ -36,9 +43,21 @@ export function Home() {
     });
 
   function handleCreateNewCycle(data: NewCycleFormData) {
-    console.log(data);
+    const id = String(Date.now());
+
+    const cycle: Cycle = {
+      id,
+      ...data,
+    };
+
+    setCycles((prevCycles) => [...prevCycles, cycle]);
+    setCurrentCycleId(id);
+
     reset();
   }
+
+  console.log(cycles);
+  console.log(currentCycleId);
 
   // Retorna os erros de validação do formulário
   console.log(formState.errors);
