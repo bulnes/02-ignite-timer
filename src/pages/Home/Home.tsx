@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { differenceInSeconds } from "date-fns";
 import { Play } from "phosphor-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as zod from "zod";
 import {
@@ -27,6 +28,7 @@ type NewCycleFormData = zod.infer<typeof newCycleFormSchema>;
 
 interface Cycle extends NewCycleFormData {
   id: string;
+  startedAt?: Date;
 }
 
 export function Home() {
@@ -48,6 +50,7 @@ export function Home() {
 
     const cycle: Cycle = {
       id,
+      startedAt: new Date(),
       ...data,
     };
 
@@ -67,6 +70,18 @@ export function Home() {
 
   const minutes = String(minutesAmount).padStart(2, "0");
   const seconds = String(secondsAmount).padStart(2, "0");
+
+  useEffect(() => {
+    if (activeCycle) {
+      setInterval(() => {
+        const now = new Date();
+        const startedAt = activeCycle.startedAt!;
+        const difference = differenceInSeconds(now, startedAt);
+
+        setAmountSecondsPassed(difference);
+      }, 1000);
+    }
+  }, [activeCycle]);
 
   // Retorna os erros de validação do formulário
   console.log(formState.errors);
