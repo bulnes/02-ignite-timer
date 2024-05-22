@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { differenceInSeconds } from "date-fns";
-import { Play } from "phosphor-react";
+import { HandPalm, Play } from "phosphor-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as zod from "zod";
@@ -11,6 +11,7 @@ import {
   MinutesAmountInput,
   Separator,
   StartCountdownButton,
+  StopCountdownButton,
   TaskInput,
 } from "./Home.styles";
 
@@ -28,7 +29,8 @@ type NewCycleFormData = zod.infer<typeof newCycleFormSchema>;
 
 interface Cycle extends NewCycleFormData {
   id: string;
-  startedAt?: Date;
+  startedAt: Date;
+  interruptedAt?: Date;
 }
 
 export function Home() {
@@ -56,8 +58,25 @@ export function Home() {
 
     setCycles((prevCycles) => [...prevCycles, cycle]);
     setCurrentCycleId(id);
+    setAmountSecondsPassed(0);
 
     reset();
+  }
+
+  function handleInterruptCycle() {
+    const updatedCycles = cycles.map((cycle) => {
+      if (cycle.id === currentCycleId) {
+        return {
+          ...cycle,
+          interruptedAt: new Date(),
+        };
+      }
+
+      return cycle;
+    });
+
+    setCycles(updatedCycles);
+    setCurrentCycleId(null);
   }
 
   const activeCycle = cycles.find((cycle) => cycle.id === currentCycleId);
@@ -71,9 +90,18 @@ export function Home() {
   const minutes = String(minutesAmount).padStart(2, "0");
   const seconds = String(secondsAmount).padStart(2, "0");
 
+  // Retorna os erros de validação do formulário
+  console.log(formState.errors);
+
+  // Retorna o valor do input em tempo real, transformando o form em controlled
+  const task = watch("task");
+  const isSubmitDisabled = !task;
+
   useEffect(() => {
+    let interval: number;
+
     if (activeCycle) {
-      setInterval(() => {
+      interval = setInterval(() => {
         const now = new Date();
         const startedAt = activeCycle.startedAt!;
         const difference = differenceInSeconds(now, startedAt);
@@ -81,14 +109,17 @@ export function Home() {
         setAmountSecondsPassed(difference);
       }, 1000);
     }
+
+    return () => {
+      clearInterval(interval); // Assistir novamente a aula para entender melhor
+    };
   }, [activeCycle]);
 
-  // Retorna os erros de validação do formulário
-  console.log(formState.errors);
-
-  // Retorna o valor do input em tempo real, transformando o form em controlled
-  const task = watch("task");
-  const isSubmitDisabled = !task;
+  useEffect(() => {
+    if (activeCycle) {
+      document.title = `${minutes}:${seconds} - ${activeCycle.task}`;
+    }
+  }, [activeCycle, minutes, seconds]);
 
   return (
     <HomeContainer>
@@ -100,6 +131,7 @@ export function Home() {
             id="task"
             list="tasks-suggestions"
             placeholder="Dê um nome para seu projeto"
+            disabled={Boolean(activeCycle)}
             {...register("task")}
           />
 
@@ -118,6 +150,7 @@ export function Home() {
             step={5}
             min={5}
             max={60}
+            disabled={Boolean(activeCycle)}
             {...register("minutesAmount", { valueAsNumber: true })}
           />
 
@@ -132,10 +165,17 @@ export function Home() {
           <span>{seconds[1]}</span>
         </CountdownContainer>
 
-        <StartCountdownButton type="submit" disabled={isSubmitDisabled}>
-          <Play size={24} />
-          Começar
-        </StartCountdownButton>
+        {activeCycle ? (
+          <StopCountdownButton type="button" onClick={handleInterruptCycle}>
+            <HandPalm size={24} />
+            Interromper
+          </StopCountdownButton>
+        ) : (
+          <StartCountdownButton type="submit" disabled={isSubmitDisabled}>
+            <Play size={24} />
+            Começar
+          </StartCountdownButton>
+        )}
       </form>
     </HomeContainer>
   );
