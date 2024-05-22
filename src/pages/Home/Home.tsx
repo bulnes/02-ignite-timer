@@ -31,6 +31,7 @@ interface Cycle extends NewCycleFormData {
   id: string;
   startedAt: Date;
   interruptedAt?: Date;
+  finishedAt?: Date;
 }
 
 export function Home() {
@@ -106,7 +107,24 @@ export function Home() {
         const startedAt = activeCycle.startedAt!;
         const difference = differenceInSeconds(now, startedAt);
 
-        setAmountSecondsPassed(difference);
+        if (difference >= totalSeconds) {
+          const updatedCycles = cycles.map((cycle) => {
+            if (cycle.id === currentCycleId) {
+              return {
+                ...cycle,
+                finishedAt: now,
+              };
+            }
+
+            return cycle;
+          });
+
+          setCycles(updatedCycles);
+          setCurrentCycleId(null);
+          setAmountSecondsPassed(0);
+        } else {
+          setAmountSecondsPassed(difference);
+        }
       }, 1000);
     }
 
